@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Re-Registration Dashboard</title>
+<style>
+  :root{
+    --ink:#1b2430; --ink-soft:#5b6674; --line:#e2e6ea;
+    --bg:#f6f7f9; --card:#ffffff;
+    --navy:#26415e; --navy-deep:#182b40; --navy-light:#e7edf3;
+    --gold:#c9962c;
+    --pos:#2f7d5c; --pos-bg:#e7f3ed;
+    --neg:#b1483f; --neg-bg:#fbebe9;
+    --warn:#b17a1f; --warn-bg:#fbf1e0;
+    --track:#eef1f4;
+    padding-top: env(safe-area-inset-top,0px);
+    padding-bottom: env(safe-area-inset-bottom,0px);
+    box-sizing:border-box;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#e8ebef; --ink-soft:#9aa5b1; --line:#2a3340;
+      --bg:#12161c; --card:#181e26;
+      --navy:#7fa2c9; --navy-deep:#0d1218; --navy-light:#1c2a38;
+      --gold:#e0b45c;
+      --pos:#5fc79a; --pos-bg:#173226;
+      --neg:#e8837a; --neg-bg:#331d1c;
+      --warn:#e0b45c; --warn-bg:#332b17;
+      --track:#232a34;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#e8ebef; --ink-soft:#9aa5b1; --line:#2a3340;
+    --bg:#12161c; --card:#181e26;
+    --navy:#7fa2c9; --navy-deep:#0d1218; --navy-light:#1c2a38;
+    --gold:#e0b45c;
+    --pos:#5fc79a; --pos-bg:#173226;
+    --neg:#e8837a; --neg-bg:#331d1c;
+    --warn:#e0b45c; --warn-bg:#332b17;
+    --track:#232a34;
+  }
+  html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100%; background:var(--bg); color:var(--ink); font-family:'Source Serif Pro',Georgia,'Times New Roman',serif;}
+  .num{font-family:'IBM Plex Mono','Courier New',monospace; font-variant-numeric:tabular-nums;}
+  header{background:linear-gradient(160deg,var(--navy-deep),var(--navy)); color:#f2f4f7; padding:24px 20px 18px; padding-top:calc(24px + env(safe-area-inset-top,0px));}
+  header .wrap{max-width:1180px;margin:0 auto;}
+  header h1{font-size:24px; margin:0 0 4px; font-weight:600;}
+  header p{margin:0; color:#c7d2de; font-size:13.5px; max-width:64ch;}
+
+  .filterbar{position:sticky; top:0; z-index:5; background:var(--card); border-bottom:1px solid var(--line); padding:10px 20px; padding-top:env(safe-area-inset-top,0px);}
+  .filterbar .wrap{max-width:1180px; margin:0 auto; display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-family:Arial,sans-serif;}
+  .filterbar select, .filterbar input{font-family:Arial,sans-serif; font-size:13px; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink);}
+  .filterbar input{flex:1; min-width:140px;}
+  .chip{display:inline-flex; align-items:center; gap:6px; font-size:12px; background:var(--navy-light); color:var(--navy); padding:4px 10px; border-radius:20px; cursor:pointer; border:none;}
+  .chip .x{font-weight:700;}
+  #clearAll{display:none; font-size:12px; color:var(--ink-soft); background:none; border:1px solid var(--line); border-radius:6px; padding:6px 10px; cursor:pointer; font-family:Arial,sans-serif;}
+
+  main{max-width:1180px; margin:0 auto; padding:20px 20px 60px;}
+  .top-card{background:linear-gradient(135deg,var(--pos-bg),var(--card)); border:1px solid var(--pos); border-radius:8px; padding:16px 18px; margin-bottom:22px;}
+  .top-card .tag{font-family:Arial,sans-serif; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--pos); font-weight:700;}
+  .top-card h3{margin:6px 0 4px; font-size:19px;}
+  .top-card p{margin:0; font-size:13.5px; color:var(--ink); font-family:Arial,sans-serif; line-height:1.5;}
+
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px;}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 16px; box-shadow:0 4px 14px rgba(20,30,45,.06); transition:box-shadow .15s;}
+  .kpi .label{font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; font-family:Arial,sans-serif;}
+  .kpi .value{font-size:23px; margin-top:4px; font-weight:700;}
+  .kpi .sub{font-size:12px; color:var(--ink-soft); margin-top:2px;}
+
+  section{margin-bottom:30px;}
+  h2{font-size:16px; font-weight:700; margin:0 0 4px;}
+  .section-note{font-size:12.5px; color:var(--ink-soft); margin:0 0 14px; font-family:Arial,sans-serif;}
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 18px 6px;}
+
+  .row{padding:8px 0; border-bottom:1px solid var(--line); cursor:pointer; border-radius:6px; transition:background .1s;}
+  .row:hover{background:var(--track);}
+  .row.active{background:var(--navy-light);}
+  .row:last-child{border-bottom:none;}
+  .row-head{display:grid; grid-template-columns:22px 180px 1fr 128px; align-items:center; gap:10px;}
+  .row-head .rank{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-soft);}
+  .row-head .name{font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .bar-track{position:relative; height:15px; background:var(--track); border-radius:3px; overflow:hidden;}
+  .bar-fill{position:absolute; left:0; top:0; height:100%; background:var(--navy); transition:width .2s;}
+  .meta{font-size:12px; text-align:right; color:var(--ink-soft); font-family:Arial,sans-serif; white-space:nowrap;}
+  .meta b{color:var(--ink); font-family:'IBM Plex Mono','Courier New',monospace;}
+  .pills{grid-column:2/-1; display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
+  .pill{font-family:Arial,sans-serif; font-size:11px; padding:2px 8px; border-radius:20px; background:var(--track); color:var(--ink-soft); white-space:nowrap;}
+  .pill b{color:var(--ink); font-family:'IBM Plex Mono',monospace;}
+  .focus-note{grid-column:2/-1; margin-top:8px; padding:10px 12px; background:var(--warn-bg); border:1px solid var(--warn); border-radius:6px; font-family:Arial,sans-serif; font-size:12.5px; color:var(--ink); line-height:1.5;}
+  .focus-note .flabel{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--warn); font-weight:700; display:block; margin-bottom:3px;}
+
+  .table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px; background:var(--card);}
+  table{border-collapse:collapse; width:100%; min-width:560px; font-size:13px;}
+  th, td{padding:9px 12px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap;}
+  th:first-child, td:first-child{text-align:left; position:sticky; left:0; background:var(--card);}
+  th{font-family:Arial,sans-serif; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); background:var(--card);}
+  tbody tr{cursor:pointer;}
+  tbody tr:hover td{background:var(--track);}
+  tbody tr.active td{background:var(--navy-light);}
+  .badge{display:inline-block; padding:2px 8px; border-radius:20px; font-size:12px; font-family:Arial,sans-serif;}
+  .badge.pos{background:var(--pos-bg); color:var(--pos);}
+  .badge.neg{background:var(--neg-bg); color:var(--neg);}
+  .badge.warn{background:var(--warn-bg); color:var(--warn);}
+  .empty{padding:20px; text-align:center; color:var(--ink-soft); font-family:Arial,sans-serif; font-size:13px;}
+
+  .div-row{display:grid; grid-template-columns:180px 1fr 130px; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--line);}
+  .div-row:last-child{border-bottom:none;}
+  .div-row .name{font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .div-track{position:relative; height:15px; background:var(--track); border-radius:3px;}
+  .div-mid{position:absolute; left:50%; top:-2px; width:1px; height:19px; background:var(--ink-soft); opacity:.4;}
+  .div-fill{position:absolute; top:0; height:100%; border-radius:2px; background:var(--navy);}
+  .div-fill.neg{background:var(--neg);}
+  .div-row .meta{font-size:12px; text-align:right; font-family:Arial,sans-serif; color:var(--ink-soft); white-space:nowrap;}
+  .div-row .meta b{color:var(--ink); font-family:'IBM Plex Mono','Courier New',monospace;}
+  .div-row .meta b.neg{color:var(--neg);}
+
+  footer{max-width:1180px; margin:0 auto; padding:0 20px 30px; font-size:11.5px; color:var(--ink-soft); font-family:Arial,sans-serif;}
+  @media (max-width:720px){
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .row-head{grid-template-columns:18px 1fr 80px; gap:6px;}
+    .pills{grid-column:1/-1;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Re-Registration Dashboard</h1>
+  </div>
+</header>
+
+<div class="filterbar">
+  <div class="wrap">
+    <select id="progSel"><option value="">All programs</option></select>
+    <select id="priSel"><option value="">All priority categories</option></select>
+    <input type="text" id="mentorSearch" placeholder="Search mentor…">
+    <span id="chips"></span>
+    <button id="clearAll">Clear all filters ✕</button>
+  </div>
+</div>
+
+<main>
+  <div class="top-card" id="topCard"></div>
+  <div class="kpis" id="kpis"></div>
+
+  <section>
+    <h2 id="mentorHeading">Mentor-wise re-registration status</h2>
+    <p class="section-note">Click a mentor to see their program breakdown and a focus note on where to concentrate re-registration effort.</p>
+    <div class="chart-card"><div id="mentorChart"></div></div>
+  </section>
+
+  <section>
+    <h2 id="programHeading">Program-wise re-registration status</h2>
+    <p class="section-note">Click a program to filter everything to it.</p>
+    <div class="chart-card"><div id="programChart"></div></div>
+  </section>
+
+  <section>
+    <h2 id="priorityHeading">Priority category breakdown</h2>
+    <p class="section-note">P1 = closest to full payment, P7 = nil submission — the least engaged. Click a row to filter.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Priority category</th><th>Total</th><th>Paid</th><th>Not paid</th><th>Not paid %</th></tr></thead>
+        <tbody id="priBody"></tbody>
+      </table>
+    </div>
+  <section>
+    <h2>IS vs DA — course completion gap by mentor</h2>
+    <p class="section-note">IS (In-Semester) minus DA (Direct Admission) completion %, from the term pivot. Green = IS leads outperform DA leads for that mentor; red = the reverse. This is a separate metric from re-registration payment status above.</p>
+    <div class="chart-card"><div id="isdaChart"></div></div>
+  </section>
+</main>
+
+<footer>Re-reg status: Paid / Not Paid / Partially Paid. Priority category uses the updated field. Click any chart element or row to cross-filter; use the ✕ chips or "Clear all filters" to reset.</footer>
+
+<script>
+const RAW = {"mentors":["Annie Evangeline M","Devika K","Farhana Azmi","Fathima Nasrin","Garima Mathur","H Farhana Begum","Mamatha Darji","Manoj Kumar H N","Meenakshi Mishra","Monisha J S","Prathamesh Balasaheb Karambale","Priya Basumatary","Raghavendra Vishwanath","Raji Mary","Rida Fatima","Riya Gossain","Sharanya S","Sharda Jadhav","Ume Kubra","Varun Jetty"],"programs":["B.Com","BBA","BCA","M.Com","MA in Economics","MA.JMC","MBA","MCA"],"priorities":["P1 - Full / Annual Payment","P2 - All IA_All Exams","P3 - Full Exam_Part/Nil IA","P4 - Full IA_Part/Nil Exam","P5 - Partial IA_Partial Exams","P6 - Partial IA_Nil Exams/Nil IA_Partial Exams","P7 - Nil IA_Nil Exams"],"rows":[[0,1,0,46,45,1,0],[0,1,1,256,183,73,0],[0,1,3,68,28,40,0],[0,1,4,1,0,1,0],[0,1,5,1,0,1,0],[0,1,6,25,1,24,0],[0,6,1,518,377,140,1],[0,6,3,50,26,24,0],[0,6,5,1,0,1,0],[0,6,6,14,0,14,0],[1,3,1,81,65,16,0],[1,3,3,13,7,6,0],[1,3,6,3,0,3,0],[1,6,0,1,0,1,0],[1,6,1,837,647,190,0],[1,6,2,1,0,1,0],[1,6,3,66,29,37,0],[1,6,5,2,1,1,0],[1,6,6,7,0,7,0],[2,0,1,155,112,43,0],[2,0,2,1,0,1,0],[2,0,3,18,1,17,0],[2,0,6,6,0,6,0],[2,6,1,761,525,236,0],[2,6,2,1,0,1,0],[2,6,3,51,17,34,0],[2,6,6,8,0,8,0],[3,2,0,34,31,3,0],[3,2,1,338,246,91,1],[3,2,3,25,8,17,0],[3,2,6,25,0,25,0],[3,7,1,508,376,131,1],[3,7,3,26,6,20,0],[3,7,5,1,0,1,0],[3,7,6,5,0,5,0],[4,1,0,49,49,0,0],[4,1,1,258,188,70,0],[4,1,2,1,0,1,0],[4,1,3,59,18,41,0],[4,1,5,5,2,3,0],[4,1,6,34,0,34,0],[4,6,1,511,392,119,0],[4,6,2,2,1,1,0],[4,6,3,50,18,32,0],[4,6,6,12,0,12,0],[5,0,1,123,97,26,0],[5,0,3,35,6,28,1],[5,0,5,2,0,2,0],[5,0,6,6,0,6,0],[5,6,1,733,512,220,1],[5,6,2,3,0,3,0],[5,6,3,61,25,36,0],[5,6,4,1,0,1,0],[5,6,6,16,2,14,0],[6,1,0,18,18,0,0],[6,1,1,276,174,102,0],[6,1,2,5,2,3,0],[6,1,3,80,17,63,0],[6,1,4,1,0,1,0],[6,1,5,3,0,3,0],[6,1,6,29,3,26,0],[6,6,1,500,376,124,0],[6,6,2,1,0,1,0],[6,6,3,38,14,24,0],[6,6,4,1,1,0,0],[6,6,5,3,1,2,0],[6,6,6,17,0,17,0],[7,1,0,50,45,5,0],[7,1,1,296,211,84,1],[7,1,2,2,0,2,0],[7,1,3,49,18,31,0],[7,1,4,1,0,1,0],[7,1,5,1,0,1,0],[7,1,6,26,0,26,0],[7,6,0,1,1,0,0],[7,6,1,493,350,143,0],[7,6,2,1,0,1,0],[7,6,3,40,13,27,0],[7,6,5,2,0,2,0],[7,6,6,9,0,9,0],[8,0,1,121,83,38,0],[8,0,2,1,1,0,0],[8,0,3,37,9,28,0],[8,0,5,2,0,2,0],[8,0,6,3,0,3,0],[8,6,1,719,543,174,2],[8,6,2,1,0,1,0],[8,6,3,72,25,47,0],[8,6,6,14,0,14,0],[9,2,0,107,100,7,0],[9,2,1,389,307,82,0],[9,2,2,3,1,2,0],[9,2,3,60,27,33,0],[9,2,5,2,0,2,0],[9,2,6,35,5,30,0],[9,7,1,251,200,51,0],[9,7,2,1,0,1,0],[9,7,3,16,4,12,0],[9,7,5,1,0,1,0],[9,7,6,3,0,3,0],[10,0,1,139,96,43,0],[10,0,3,27,12,15,0],[10,0,6,7,1,6,0],[10,6,1,706,545,160,1],[10,6,2,2,0,2,0],[10,6,3,76,32,44,0],[10,6,5,2,0,2,0],[10,6,6,11,0,11,0],[11,1,0,16,12,4,0],[11,1,1,313,218,95,0],[11,1,2,4,2,2,0],[11,1,3,54,14,40,0],[11,1,4,2,1,1,0],[11,1,5,2,0,2,0],[11,1,6,20,0,20,0],[11,6,1,508,376,132,0],[11,6,3,44,16,28,0],[11,6,4,1,0,1,0],[11,6,5,1,0,1,0],[11,6,6,8,1,7,0],[12,1,0,19,14,5,0],[12,1,1,314,188,126,0],[12,1,2,3,0,3,0],[12,1,3,59,16,43,0],[12,1,4,2,0,2,0],[12,1,5,1,0,1,0],[12,1,6,20,1,19,0],[12,6,1,502,356,146,0],[12,6,3,44,13,31,0],[12,6,6,11,0,11,0],[13,2,0,35,31,4,0],[13,2,1,449,341,108,0],[13,2,2,1,0,1,0],[13,2,3,51,20,31,0],[13,2,5,5,0,5,0],[13,2,6,35,0,35,0],[13,7,1,298,237,61,0],[13,7,2,1,0,1,0],[13,7,3,22,10,12,0],[13,7,6,3,1,2,0],[14,2,0,30,25,5,0],[14,2,1,426,299,127,0],[14,2,2,4,1,3,0],[14,2,3,53,20,33,0],[14,2,5,3,1,2,0],[14,2,6,30,1,29,0],[14,7,1,295,224,71,0],[14,7,3,21,12,9,0],[14,7,4,3,1,2,0],[14,7,5,1,1,0,0],[14,7,6,3,0,3,0],[15,0,1,146,120,26,0],[15,0,3,30,13,17,0],[15,0,6,4,0,4,0],[15,6,1,700,495,204,1],[15,6,2,1,1,0,0],[15,6,3,80,34,46,0],[15,6,4,1,0,1,0],[15,6,5,2,0,2,0],[15,6,6,7,1,6,0],[16,2,0,6,5,1,0],[16,2,1,452,347,105,0],[16,2,2,8,4,4,0],[16,2,3,36,11,25,0],[16,2,5,3,2,1,0],[16,2,6,13,2,11,0],[16,6,1,437,316,120,1],[16,6,2,3,2,1,0],[16,6,3,36,8,28,0],[16,6,4,2,1,1,0],[16,6,5,1,0,1,0],[16,6,6,3,0,3,0],[17,1,0,16,15,1,0],[17,1,1,480,371,109,0],[17,1,2,1,0,1,0],[17,1,3,145,71,74,0],[17,1,5,4,2,2,0],[17,1,6,18,1,17,0],[17,4,1,147,126,21,0],[17,4,3,23,9,14,0],[17,4,5,1,0,1,0],[17,4,6,7,1,6,0],[17,5,1,85,71,14,0],[17,5,3,26,10,16,0],[17,5,5,1,1,0,0],[17,5,6,5,0,5,0],[18,0,0,1,0,1,0],[18,0,1,137,106,31,0],[18,0,3,32,13,19,0],[18,0,6,8,0,8,0],[18,6,1,721,547,174,0],[18,6,2,2,0,2,0],[18,6,3,79,26,53,0],[18,6,4,1,0,1,0],[18,6,5,1,0,1,0],[18,6,6,17,2,15,0],[19,2,0,55,48,7,0],[19,2,1,403,297,106,0],[19,2,2,5,2,3,0],[19,2,3,52,23,29,0],[19,2,4,1,1,0,0],[19,2,5,4,0,4,0],[19,2,6,24,0,24,0],[19,7,1,293,234,59,0],[19,7,2,1,1,0,0],[19,7,3,18,9,9,0],[19,7,4,1,1,0,0],[19,7,6,6,0,6,0]]};
+
+const ISDA = [{"name":"Rida Fatima","is_pct":77.4,"da_pct":45.9,"diff":31.4},{"name":"Monisha J S","is_pct":81.2,"da_pct":56.7,"diff":24.6},{"name":"Mamatha Darji","is_pct":70.7,"da_pct":56.2,"diff":14.5},{"name":"Manoj Kumar H N","is_pct":74.0,"da_pct":60.9,"diff":13.0},{"name":"Priya Basumatary","is_pct":71.3,"da_pct":60.4,"diff":10.9},{"name":"Raji Mary","is_pct":76.8,"da_pct":69.5,"diff":7.3},{"name":"Farhana Azmi","is_pct":69.2,"da_pct":62.8,"diff":6.4},{"name":"Sharanya S","is_pct":71.8,"da_pct":67.5,"diff":4.3},{"name":"Sharda Jadhav","is_pct":71.9,"da_pct":67.7,"diff":4.2},{"name":"Devika K","is_pct":75.5,"da_pct":73.0,"diff":2.5},{"name":"Varun Jetty","is_pct":71.5,"da_pct":71.2,"diff":0.3},{"name":"H Farhana Begum","is_pct":65.7,"da_pct":65.4,"diff":0.3},{"name":"Garima Mathur","is_pct":68.1,"da_pct":68.0,"diff":0.1},{"name":"Ume Kubra","is_pct":68.2,"da_pct":70.2,"diff":-2.1},{"name":"Annie Evangeline M","is_pct":65.5,"da_pct":68.8,"diff":-3.3},{"name":"Fathima Nasrin","is_pct":67.1,"da_pct":72.1,"diff":-5.0},{"name":"Riya Gossain","is_pct":63.8,"da_pct":73.1,"diff":-9.3},{"name":"Prathamesh Balasaheb Karambale","is_pct":53.5,"da_pct":87.6,"diff":-34.1},{"name":"Meenakshi Mishra","is_pct":57.6,"da_pct":94.7,"diff":-37.1},{"name":"Raghavendra Vishwanath","is_pct":50.1,"da_pct":87.3,"diff":-37.2}];
+
+const NOTES = {"Annie Evangeline M":"BBA is the weakest program (64.7% paid, 140 unpaid), mostly in P2 (73 students).","Devika K":"MBA is the weakest program (74.1% paid, 237 unpaid), mostly in P2 (190 students).","Farhana Azmi":"B.Com is the weakest program (62.8% paid, 67 unpaid), mostly in P2 (43 students).","Fathima Nasrin":"BCA is the weakest program (67.5% paid, 136 unpaid), mostly in P2 (91 students).","Garima Mathur":"BBA is the weakest program (63.3% paid, 149 unpaid), mostly in P2 (70 students).","H Farhana Begum":"B.Com is the weakest program (62.0% paid, 62 unpaid), mostly in P4 (28 students).","Mamatha Darji":"BBA is the weakest program (51.9% paid, 198 unpaid), mostly in P2 (102 students). DA leads are lagging IS by 14.5 pts \u2014 prioritize DA follow-ups.","Manoj Kumar H N":"BBA is the weakest program (64.5% paid, 150 unpaid), mostly in P2 (84 students). DA leads are lagging IS by 13.0 pts \u2014 prioritize DA follow-ups.","Meenakshi Mishra":"B.Com is the weakest program (56.7% paid, 71 unpaid), mostly in P2 (38 students). IS leads are lagging DA by 37.1 pts \u2014 prioritize IS follow-ups.","Monisha J S":"BCA is the weakest program (73.8% paid, 156 unpaid), mostly in P2 (82 students). DA leads are lagging IS by 24.6 pts \u2014 prioritize DA follow-ups.","Prathamesh Balasaheb Karambale":"B.Com is the weakest program (63.0% paid, 64 unpaid), mostly in P2 (43 students). IS leads are lagging DA by 34.1 pts \u2014 prioritize IS follow-ups.","Priya Basumatary":"BBA is the weakest program (60.1% paid, 164 unpaid), mostly in P2 (95 students). DA leads are lagging IS by 10.9 pts \u2014 prioritize DA follow-ups.","Raghavendra Vishwanath":"BBA is the weakest program (52.4% paid, 199 unpaid), mostly in P2 (126 students). IS leads are lagging DA by 37.2 pts \u2014 prioritize IS follow-ups.","Raji Mary":"BCA is the weakest program (68.1% paid, 184 unpaid), mostly in P2 (108 students).","Rida Fatima":"BCA is the weakest program (63.6% paid, 199 unpaid), mostly in P2 (127 students). DA leads are lagging IS by 31.4 pts \u2014 prioritize DA follow-ups.","Riya Gossain":"MBA is the weakest program (67.1% paid, 259 unpaid), mostly in P2 (204 students).","Sharanya S":"MBA is the weakest program (67.8% paid, 154 unpaid), mostly in P2 (120 students).","Sharda Jadhav":"BBA is the weakest program (69.3% paid, 204 unpaid), mostly in P2 (109 students).","Ume Kubra":"B.Com is the weakest program (66.9% paid, 59 unpaid), mostly in P2 (31 students).","Varun Jetty":"BCA is the weakest program (68.2% paid, 173 unpaid), mostly in P2 (106 students)."};
+
+const state = { mentor: null, program: null, priority: null };
+
+function fmt(n){ return n.toFixed(1)+'%'; }
+function short(p){ return p.split(' - ')[0]; }
+
+// populate filter selects
+const progSel = document.getElementById('progSel');
+RAW.programs.forEach((p,i)=>progSel.insertAdjacentHTML('beforeend',`<option value="${i}">${p}</option>`));
+const priSel = document.getElementById('priSel');
+RAW.priorities.forEach((p,i)=>priSel.insertAdjacentHTML('beforeend',`<option value="${i}">${p}</option>`));
+
+progSel.addEventListener('change', ()=>{ state.program = progSel.value===''?null:+progSel.value; render(); });
+priSel.addEventListener('change', ()=>{ state.priority = priSel.value===''?null:+priSel.value; render(); });
+document.getElementById('mentorSearch').addEventListener('input', render);
+document.getElementById('clearAll').addEventListener('click', ()=>{
+  state.mentor=null; state.program=null; state.priority=null;
+  progSel.value=''; priSel.value=''; document.getElementById('mentorSearch').value='';
+  render();
+});
+
+function filteredRows(ignore){
+  return RAW.rows.filter(r=>
+    (ignore==='mentor' || state.mentor===null || r[0]===state.mentor) &&
+    (ignore==='program' || state.program===null || r[1]===state.program) &&
+    (ignore==='priority' || state.priority===null || r[2]===state.priority)
+  );
+}
+
+function aggBy(rows, dim){
+  const m = new Map();
+  rows.forEach(r=>{
+    const k = r[dim];
+    if(!m.has(k)) m.set(k, {total:0,paid:0,not_paid:0,partial:0});
+    const o = m.get(k);
+    o.total+=r[3]; o.paid+=r[4]; o.not_paid+=r[5]; o.partial+=r[6];
+  });
+  return m;
+}
+
+function renderChips(){
+  const chips = [];
+  if(state.mentor!==null) chips.push({label: RAW.mentors[state.mentor], key:'mentor'});
+  if(state.program!==null) chips.push({label: RAW.programs[state.program], key:'program'});
+  if(state.priority!==null) chips.push({label: short(RAW.priorities[state.priority]), key:'priority'});
+  document.getElementById('chips').innerHTML = chips.map(c=>`<button class="chip" data-k="${c.key}">${c.label} <span class="x">✕</span></button>`).join('');
+  document.querySelectorAll('.chip').forEach(b=>b.addEventListener('click', ()=>{
+    const k = b.dataset.k;
+    state[k] = null;
+    if(k==='program') progSel.value='';
+    if(k==='priority') priSel.value='';
+    render();
+  }));
+  document.getElementById('clearAll').style.display = chips.length ? 'inline-block' : 'none';
+}
+
+function render(){
+  renderChips();
+  const rows = filteredRows(null);
+  const totals = {total:0,paid:0,not_paid:0};
+  rows.forEach(r=>{ totals.total+=r[3]; totals.paid+=r[4]; totals.not_paid+=r[5]; });
+  const overallPct = totals.total ? totals.paid/totals.total*100 : 0;
+
+  // Mentor ranking (aggregate over rows matching program+priority filters, ignoring mentor filter for the list itself unless search narrows)
+  const mentorRows = filteredRows('mentor');
+  const mAgg = aggBy(mentorRows, 0);
+  let mentorList = [...mAgg.entries()].map(([idx,o])=>({
+    idx, name: RAW.mentors[idx], total:o.total, paid:o.paid, not_paid:o.not_paid,
+    paid_pct: o.total? o.paid/o.total*100 : 0
+  })).sort((a,b)=>b.paid_pct-a.paid_pct);
+
+  const searchQ = document.getElementById('mentorSearch').value.toLowerCase();
+  if(searchQ) mentorList = mentorList.filter(m=>m.name.toLowerCase().includes(searchQ));
+
+  // Top performer (unfiltered by mentor, respects program/priority filters)
+  const allMentorAgg = [...aggBy(filteredRows('mentor'), 0).entries()].map(([idx,o])=>({
+    idx, name: RAW.mentors[idx], total:o.total, paid:o.paid, not_paid:o.not_paid, paid_pct: o.total? o.paid/o.total*100:0
+  })).sort((a,b)=>b.paid_pct-a.paid_pct);
+
+  const kpis = [
+    {label:'Students (filtered)', value: totals.total.toLocaleString(), sub: rows.length===RAW.rows.length?'all students':'filtered view'},
+    {label:'Paid', value: fmt(overallPct), sub:`${totals.paid.toLocaleString()} of ${totals.total.toLocaleString()}`},
+    {label:'Not paid', value: totals.not_paid.toLocaleString(), sub:'re-registration pending'},
+    {label: state.mentor!==null?'Selected mentor':'Top performer', value: state.mentor!==null? RAW.mentors[state.mentor] : (allMentorAgg[0]?allMentorAgg[0].name:'—'), sub: state.mentor!==null? fmt(mentorList.find(m=>m.idx===state.mentor)?.paid_pct||0)+' paid' : (allMentorAgg[0]?fmt(allMentorAgg[0].paid_pct)+' paid':'')},
+  ];
+  document.getElementById('kpis').innerHTML = kpis.map(k=>`<div class="kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div><div class="sub">${k.sub}</div></div>`).join('');
+
+  // Top card
+  const best = allMentorAgg[0];
+  if(best){
+    document.getElementById('topCard').innerHTML = `
+      <div class="tag">Best performing mentor${state.program!==null||state.priority!==null?' (in current filter)':''}</div>
+      <h3>${best.name} — ${fmt(best.paid_pct)} paid</h3>
+      <p>${best.paid.toLocaleString()} of ${best.total.toLocaleString()} students paid${best.paid_pct-overallPct>=0?`, ${(best.paid_pct-overallPct).toFixed(1)} points above the current average of ${fmt(overallPct)}.`:'.'}</p>`;
+  } else {
+    document.getElementById('topCard').innerHTML = `<div class="tag">No data</div><h3>No students match this filter</h3><p>Try clearing a filter.</p>`;
+  }
+
+  // Mentor chart with drill-down program pills for selected/hovered mentor
+  document.getElementById('mentorHeading').textContent = state.mentor!==null ? `${RAW.mentors[state.mentor]} — program breakdown` : 'Mentor-wise re-registration status';
+  if(mentorList.length===0){
+    document.getElementById('mentorChart').innerHTML = `<div class="empty">No mentors match this filter.</div>`;
+  } else {
+    document.getElementById('mentorChart').innerHTML = mentorList.map((m,i)=>{
+      const isActive = state.mentor===m.idx;
+      let pillsHtml = '';
+      if(isActive){
+        const progAgg = aggBy(RAW.rows.filter(r=>r[0]===m.idx && (state.priority===null||r[2]===state.priority)), 1);
+        const pills = [...progAgg.entries()].map(([idx,o])=>`<span class="pill">${RAW.programs[idx]} <b>${fmt(o.total?o.paid/o.total*100:0)}</b> (${o.total})</span>`).join('');
+        pillsHtml = `<div class="pills">${pills}</div>`;
+        const noteText = NOTES[m.name];
+        if(noteText){
+          pillsHtml += `<div class="focus-note"><span class="flabel">Focus for ${m.name}</span>${noteText}</div>`;
+        }
+      }
+      return `<div class="row ${isActive?'active':''}" data-mentor="${m.idx}">
+        <div class="row-head">
+          <div class="rank">${i+1}</div>
+          <div class="name" title="${m.name}">${m.name}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${m.paid_pct}%"></div></div>
+          <div class="meta"><b>${fmt(m.paid_pct)}</b> · ${m.not_paid} unpaid</div>
+        </div>
+        ${pillsHtml}
+      </div>`;
+    }).join('');
+    document.querySelectorAll('#mentorChart .row').forEach(el=>el.addEventListener('click', ()=>{
+      const idx = +el.dataset.mentor;
+      state.mentor = state.mentor===idx ? null : idx;
+      render();
+    }));
+  }
+
+  // Program chart
+  document.getElementById('programHeading').textContent = state.program!==null ? `${RAW.programs[state.program]} — re-registration status` : 'Program-wise re-registration status';
+  const progAggAll = [...aggBy(filteredRows('program'), 1).entries()].map(([idx,o])=>({
+    idx, name: RAW.programs[idx], total:o.total, paid:o.paid, not_paid:o.not_paid, paid_pct:o.total?o.paid/o.total*100:0
+  })).sort((a,b)=>a.paid_pct-b.paid_pct);
+  document.getElementById('programChart').innerHTML = progAggAll.map(p=>{
+    const isActive = state.program===p.idx;
+    return `<div class="row ${isActive?'active':''}" data-program="${p.idx}">
+      <div class="row-head">
+        <div class="rank"></div>
+        <div class="name">${p.name}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${p.paid_pct}%"></div></div>
+        <div class="meta"><b>${fmt(p.paid_pct)}</b> · ${p.not_paid.toLocaleString()} unpaid</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('#programChart .row').forEach(el=>el.addEventListener('click', ()=>{
+    const idx = +el.dataset.program;
+    state.program = state.program===idx ? null : idx;
+    progSel.value = state.program===null ? '' : idx;
+    render();
+  }));
+
+  // Priority table
+  document.getElementById('priorityHeading').textContent = state.priority!==null ? `${RAW.priorities[state.priority]} — detail` : 'Priority category breakdown';
+  const priAgg = [...aggBy(filteredRows('priority'), 2).entries()].map(([idx,o])=>({
+    idx, name: RAW.priorities[idx], total:o.total, paid:o.paid, not_paid:o.not_paid,
+    not_paid_pct: o.total? o.not_paid/o.total*100 : 0
+  })).sort((a,b)=>b.not_paid-a.not_paid);
+  document.getElementById('priBody').innerHTML = priAgg.length ? priAgg.map(p=>{
+    const cls = p.not_paid_pct>=60?'neg':(p.not_paid_pct>=25?'warn':'pos');
+    const isActive = state.priority===p.idx;
+    return `<tr class="${isActive?'active':''}" data-priority="${p.idx}">
+      <td>${p.name}</td>
+      <td class="num">${p.total.toLocaleString()}</td>
+      <td class="num">${p.paid.toLocaleString()}</td>
+      <td class="num">${p.not_paid.toLocaleString()}</td>
+      <td class="num"><span class="badge ${cls}">${fmt(p.not_paid_pct)}</span></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="5" class="empty">No data for this filter.</td></tr>`;
+  document.querySelectorAll('#priBody tr[data-priority]').forEach(el=>el.addEventListener('click', ()=>{
+    const idx = +el.dataset.priority;
+    state.priority = state.priority===idx ? null : idx;
+    priSel.value = state.priority===null ? '' : idx;
+    render();
+  }));
+}
+
+function renderISDA(){
+  const maxAbs = Math.max(...ISDA.map(d=>Math.abs(d.diff)));
+  document.getElementById('isdaChart').innerHTML = ISDA.map(d=>{
+    const cls = d.diff<0?'neg':'';
+    const width = (Math.abs(d.diff)/maxAbs*50).toFixed(1);
+    const left = d.diff>=0 ? '50%' : (50-parseFloat(width))+'%';
+    const sign = d.diff>0?'+':'';
+    return `<div class="div-row">
+      <div class="name" title="${d.name}">${d.name}</div>
+      <div class="div-track">
+        <div class="div-mid"></div>
+        <div class="div-fill ${cls}" style="left:${left}; width:${width}%"></div>
+      </div>
+      <div class="meta">IS ${d.is_pct}% · DA ${d.da_pct}% · <b class="${cls}">${sign}${d.diff}</b></div>
+    </div>`;
+  }).join('');
+}
+renderISDA();
+
+render();
+</script>
+</body>
+</html>
